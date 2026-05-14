@@ -182,6 +182,25 @@ const COLORS=['#1D9E75','#5DCAA5','#0F6E56','#9FE1CB'];
 
 let allData=[], charts={};
 
+function formatThaiDate(raw){
+  if(!raw) return '-';
+  const s = String(raw).trim();
+  // ISO format: 2026-05-14T09:12:00.000Z
+  if(s.includes('T') || s.includes('-')){
+    try{
+      const d = new Date(s);
+      if(isNaN(d.getTime())) return s;
+      return d.toLocaleString('th-TH',{
+        timeZone:'Asia/Bangkok',
+        year:'numeric', month:'2-digit', day:'2-digit',
+        hour:'2-digit', minute:'2-digit'
+      });
+    }catch(e){ return s; }
+  }
+  // Already Thai format dd/MM/yyyy HH:mm
+  return s;
+}
+
 function mKey(dateStr){
   const p=(dateStr+'').split('/');
   return p.length>=3?p[1]+'/'+p[2].split(' ')[0]:null;
@@ -231,7 +250,9 @@ async function loadData(){
     document.getElementById('last-upd').textContent='กำลังโหลด...';
     const res=await fetch(API+'?t='+Date.now());
     const raw=await res.json();
-    allData=raw.filter(r=>r.q1&&r.q2&&r.q3&&r.q4);
+    allData=raw.filter(r=>r.q1&&r.q2&&r.q3&&r.q4).map(r=>({
+      ...r, date: formatThaiDate(r.date)
+    }));
     const now=new Date();
     document.getElementById('last-upd').textContent='อัปเดต '+now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
     render();
